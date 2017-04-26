@@ -12,76 +12,15 @@ if arg[#arg] == "-debug" then require("mobdebug").start() end
 local grille = require("niveau")
 local outils = require("outils")
 local Sprites = require("Sprites")
-local liste_murs = {}
-local nombreMurs = 0
--- Point pour réglages
-local point = {}
-point.image = love.graphics.newImage("images/point.png")
-
--- Creation de la base de départ
-local base = {}
-base.x = 680
-base.y = 560
-base.image = love.graphics.newImage("images/base.png")
-base.l = base.image:getWidth()
-base.h = base.image:getHeight()
-
--- Creation de la plateforme de fin
-local plateforme = {}
-plateforme.x = 100
-plateforme.y = 500
-plateforme.vx = 180
-plateforme.image = love.graphics.newImage("images/base.png")
-plateforme.l = plateforme.image:getWidth()
-plateforme.h = plateforme.image:getHeight()
-
-local arrivee = {}
-arrivee.x = plateforme.x
-arrivee.y = plateforme.y
-arrivee.l = plateforme.image:getWidth()
-arrivee.h = 5
-
---local mur = {}
--- Fonction qui gère la création des murs
-function Sprites.CreeMur(pX, pY) 
-  
-  nombreMurs = nombreMurs + 1
-  mur = {}  
-  mur.x = pX
-  mur.y = pY
-  mur.supprime = false
-  mur.image = love.graphics.newImage("images/mur.png")
-  mur.l = mur.image:getWidth()
-  mur.h = mur.image:getHeight()
-  mur.id = nombreMurs  
-  
-  table.insert(liste_murs, mur)  
-end
+local zones = require("zones")
 
 
-
-
-
-
--- Fonction qui gère les collisions entre le joueur et les plateformes
-
-
-function collisions(joueur, plateforme)
-  local sommetPlateforme = {}
-  sommetPlateforme.x = plateforme.x
-end
-
-
-
-function love.load()
-  
-  
+function love.load() 
   
   love.window.setTitle("Jeu du pouce")
   
   largeur = love.graphics.getWidth()
-  hauteur = love.graphics.getHeight()
-  
+  hauteur = love.graphics.getHeight()  
     
   local ligne, colonne
   local bx, by = 0, 0
@@ -96,23 +35,22 @@ function love.load()
     by = by + 20
   end
   
-  for n = 1, #liste_murs do
-    local s = liste_murs[n]    
+  for n = 1, #Sprites.liste_murs do
+    local s = Sprites.liste_murs[n]    
      -- print(s.id)
   end
-  
- 
-
-
 end
 
 function love.update(dt)
   
-  if collide(Sprites.heros, base) then
+  Sprites.heros.hitBox.x = Sprites.heros.x
+  Sprites.heros.hitBox.y = Sprites.heros.y + Sprites.heros.h - Sprites.heros.hitBox.h
+  
+  if outils.rectIntersect(Sprites.heros.hitBox, Sprites.base.hitBox) then
     Sprites.heros.vy = 0
-  elseif collide(Sprites.heros, arrivee) then
+  elseif outils.rectIntersect(Sprites.heros.hitBox, Sprites.plateforme.hitBox) then
       Sprites.heros.vy = 0
-      Sprites.heros.x = Sprites.heros.x + plateforme.vx
+      Sprites.heros.x = Sprites.heros.x + Sprites.plateforme.vx
   else      
     Sprites.heros.vy = Sprites.heros.vy + 0.4 * dt
     Sprites.heros.y = Sprites.heros.y + Sprites.heros.vy
@@ -129,17 +67,15 @@ function love.update(dt)
   if love.keyboard.isDown("up") then
     Sprites.heros.y = Sprites.heros.y - 120 * dt
     Sprites.heros.vy = 0
-  end
-
-    
+  end   
   
-  plateforme.x = plateforme.x + ( plateforme.vx * dt )
-  if plateforme.x > 127 or plateforme.x < 0 then
-    plateforme.vx = - plateforme.vx
-    if plateforme.x < 1 then
-      plateforme.x = 1
-  elseif plateforme.x > 126 then
-    plateforme.x = 126
+  Sprites.plateforme.x = Sprites.plateforme.x + ( Sprites.plateforme.vx * dt )
+  if Sprites.plateforme.x > 127 or Sprites.plateforme.x < 0 then
+    Sprites.plateforme.vx = - Sprites.plateforme.vx
+    if Sprites.plateforme.x < 1 then
+      Sprites.plateforme.x = 1
+  elseif Sprites.plateforme.x > 126 then
+    Sprites.plateforme.x = 126
     end    
   end 
 
@@ -149,33 +85,33 @@ function love.draw()
   
   -- Dessin du héros
   love.graphics.draw(Sprites.heros.image, Sprites.heros.x, Sprites.heros.y, 0,1,1 )
-  love.graphics.draw(point.image, Sprites.heros.x, Sprites.heros.y, 0,1,1)
+  love.graphics.draw(Sprites.point.image, Sprites.heros.x, Sprites.heros.y, 0,1,1)
   
   -- Dessin des plateformes
-  love.graphics.draw(base.image, base.x, base.y, 0,1,1)
-  love.graphics.draw(plateforme.image, plateforme.x, plateforme.y, 0,1,1)
+  love.graphics.draw(Sprites.base.image, Sprites.base.x, Sprites.base.y, 0,1,1)
+  love.graphics.draw(Sprites.plateforme.image, Sprites.plateforme.x, Sprites.plateforme.y, 0,1,1)
   
-  love.graphics.draw(point.image, base.x, base.y, 0,1,1)
-  love.graphics.draw(point.image, plateforme.x, plateforme.y, 0,1,1)
+  love.graphics.draw(Sprites.point.image, Sprites.base.x, Sprites.base.y, 0,1,1)
+  love.graphics.draw(Sprites.point.image, Sprites.plateforme.x, Sprites.plateforme.y, 0,1,1)
 
   
   -- Dessin des murs
   local n  
-  for n = 1, #liste_murs do
-    local s = liste_murs[n]
+  for n = 1, #Sprites.liste_murs do
+    local s = Sprites.liste_murs[n]
     love.graphics.draw(s.image, s.x, s.y, 0, 1, 1)
     
   end  
   
-  for n = 1, #liste_murs do
-    local s = liste_murs[n]    
-      if collide(Sprites.heros,s) then
+  for n = 1, #Sprites.liste_murs do
+    local s = Sprites.liste_murs[n]    
+      if outils.collision(Sprites.heros,s) then
         love.graphics.print("Collision")
       end
   end
   
-  sDebug = "Debug: \n" .. 
-  
+  sDebug = "Debug: \n" .. "Héros x: " .. Sprites.heros.hitBox.x .. "\n" .. "Héros y: " .. Sprites.heros.hitBox.y
+  sDebug = sDebug .. "\n" .. "Base x: " .. Sprites.base.hitBox.x .. "\n" .. "Base y: " .. Sprites.base.hitBox.y
   love.graphics.print(sDebug, 0, 520)
   
 end
